@@ -1466,4 +1466,5 @@ void qpwgraph_patchman::stabilize (void)
 }
 
 
+#include "qpwgraph_patchman.moc"
 // end of qpwgraph_patchman.cpp

@@ -81,6 +81,7 @@ set_target_properties (${PROJECT_NAME} PROPERTIES
   CXX_STANDARD 20
   CXX_STANDARD_REQUIRED TRUE
 )
+set_target_properties(${PROJECT_NAME} PROPERTIES AUTOMOC ON)
 
 include(FindPkgConfig)
 pkg_check_modules (PIPEWIRE REQUIRED IMPORTED_TARGET libpipewire-0.3)
