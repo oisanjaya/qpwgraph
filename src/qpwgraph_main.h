@@ -25,6 +25,10 @@
 #include "ui_qpwgraph_main.h"
 
 
+// regex rules types
+typedef std::tuple<const QString, const QString, const QString, const QString> ReRule;
+typedef std::vector< ReRule > ReRules;
+
 // Forward decls.
 class qpwgraph_application;
 class qpwgraph_config;
@@ -79,6 +83,11 @@ public:
 
 	// Current selected patchbay path accessor.
 	const QString& patchbayPath() const;
+
+	// regex rules routines.
+	void clearReRules(void);
+	void appendReRule(ReRule re_rule);
+	ReRules reRules(void);
 
 protected slots:
 
@@ -259,6 +268,8 @@ private:
 	QActionGroup *m_thumb_mode;
 	qpwgraph_thumb *m_thumb;
 	int m_thumb_update;
+
+	ReRules m_re_rules;
 };
 
 

@@ -1950,6 +1950,27 @@ void qpwgraph_main::saveState (void)
 }
 
 
+// reRules routines
+void qpwgraph_main::clearReRules ( void )
+{
+	m_re_rules.clear();
+}
+
+
+// reRules routines
+ReRules qpwgraph_main::reRules ( void )
+{
+	return m_re_rules;
+}
+
+
+// reRules routines
+void qpwgraph_main::appendReRule ( ReRule re_rule )
+{
+	m_re_rules.push_back(re_rule);
+}
+
+
 // Forcibly quit application.
 void qpwgraph_main::closeQuit (void)
 {
