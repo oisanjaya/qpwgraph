@@ -645,6 +645,11 @@ void qpwgraph_patchman::SearchItemWidget::SearchItemWidgetEx()
 	m_port1->setFixedHeight(30);
 	m_port2->setFixedHeight(30);
 
+	m_node1->setTabChangesFocus(true);
+	m_node2->setTabChangesFocus(true);
+	m_port1->setTabChangesFocus(true);
+	m_port2->setTabChangesFocus(true);
+
 	QObject::connect(
 		m_node1, &QTextEdit::textChanged,
 		this, &SearchItemWidget::inputTextChanged);
