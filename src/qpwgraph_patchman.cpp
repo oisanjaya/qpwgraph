@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include "qpwgraph_patchman.h"
+#include "qpwgraph_main.h"
 
 #include "qpwgraph_canvas.h"
 #include "qpwgraph_pipewire.h"
@@ -44,6 +45,9 @@
 #include <QPainter>
 #include <QPainterPath>
 
+#include <QTextEdit>
+#include <QGroupBox>
+#include <QLabel>
 
 //----------------------------------------------------------------------------
 // qpwgraph_patchman::TreeWidget -- side-view tree widget decl.
@@ -212,6 +216,63 @@ private:
 	TreeWidget *m_inputs;
 
 	qpwgraph_patchbay::Items m_items;
+};
+
+
+//----------------------------------------------------------------------------
+// qpwgraph_patchman::SearchItemWidget -- search item widget decl.
+
+class qpwgraph_patchman::SearchItemWidget : public QHBoxLayout
+{
+	Q_OBJECT
+
+public:
+	// Constructor.
+	SearchItemWidget();
+	SearchItemWidget(ReRule rule);
+	// Destructor.
+	~SearchItemWidget();
+	ReRule data();
+	bool dataAvailable();
+
+signals:
+	void valueChanged();
+
+private:
+	QTextEdit *m_node1;
+	QTextEdit *m_node2;
+	QTextEdit *m_port1;
+	QTextEdit *m_port2;
+
+	void inputTextChanged();
+	void SearchItemWidgetEx();
+};
+
+//----------------------------------------------------------------------------
+// qpwgraph_patchman::SearchWidget -- search port1->port2 widget decl.
+
+class qpwgraph_patchman::SearchWidget : public QScrollArea
+{
+	Q_OBJECT
+
+public:
+	// Constructor.
+	SearchWidget();
+	// Destructor.
+	~SearchWidget();
+
+	ReRules getSearchItemWidget();
+
+signals:
+	void searchWidgetDirty();
+
+private:
+	QList<SearchItemWidget*> items;
+	QVBoxLayout *m_layout;
+	QGroupBox *groupbox;
+
+protected slots:
+	void searchItemChanged();
 };
 
 
@@ -540,6 +601,191 @@ void qpwgraph_patchman::LineWidget::paintEvent ( QPaintEvent * )
 QSize qpwgraph_patchman::LineWidget::sizeHint (void) const
 {
 	return QSize(60, 260);
+}
+
+
+//----------------------------------------------------------------------------
+// qpwgraph_patchman::SearchItemWidget -- search item widget impl.
+
+bool qpwgraph_patchman::SearchItemWidget::dataAvailable() {
+	return (
+		m_node1->toPlainText().length() +
+		m_port1->toPlainText().length() +
+		m_node2->toPlainText().length() +
+		m_port2->toPlainText().length()
+	) > 0;
+}
+
+ReRule qpwgraph_patchman::SearchItemWidget::data()
+{
+	ReRule retTuple(
+		m_node1->toPlainText(),
+		m_port1->toPlainText(),
+		m_node2->toPlainText(),
+		m_port2->toPlainText()
+	);
+
+	return retTuple;
+}
+
+void qpwgraph_patchman::SearchItemWidget::inputTextChanged(){
+	emit valueChanged();
+}
+
+// Constructor.
+void qpwgraph_patchman::SearchItemWidget::SearchItemWidgetEx()
+{
+	m_node1 = new QTextEdit();
+	m_node2 = new QTextEdit();
+	m_port1 = new QTextEdit();
+	m_port2 = new QTextEdit();
+
+	m_node1->setFixedHeight(30);
+	m_node2->setFixedHeight(30);
+	m_port1->setFixedHeight(30);
+	m_port2->setFixedHeight(30);
+
+	QObject::connect(
+		m_node1, &QTextEdit::textChanged,
+		this, &SearchItemWidget::inputTextChanged);
+	QObject::connect(
+		m_node2, &QTextEdit::textChanged,
+		this, &SearchItemWidget::inputTextChanged);
+	QObject::connect(
+		m_port1, &QTextEdit::textChanged,
+		this, &SearchItemWidget::inputTextChanged);
+	QObject::connect(
+		m_port2, &QTextEdit::textChanged,
+		this, &SearchItemWidget::inputTextChanged);
+
+	this->setSpacing(8);
+	this->addWidget(m_node1, 10);
+	this->addWidget(m_port1, 5);
+	auto label = new QLabel(">>");
+	label->setAlignment(Qt::AlignHCenter);
+	this->addWidget(label, 3);
+	this->addWidget(m_node2, 10);
+	this->addWidget(m_port2, 5);
+}
+
+
+qpwgraph_patchman::SearchItemWidget::SearchItemWidget()
+{
+	SearchItemWidgetEx();
+}
+
+qpwgraph_patchman::SearchItemWidget::SearchItemWidget(ReRule rule)
+{
+	SearchItemWidgetEx();
+	m_node1->setText(get<0>(rule));
+	m_port1->setText(get<1>(rule));
+	m_node2->setText(get<2>(rule));
+	m_port2->setText(get<3>(rule));
+}
+
+// Destructor.
+qpwgraph_patchman::SearchItemWidget::~SearchItemWidget (void)
+{
+
+}
+
+
+//----------------------------------------------------------------------------
+// qpwgraph_patchman::SearchWidget -- search port1->port2 widget impl.
+
+void qpwgraph_patchman::SearchWidget::searchItemChanged(){
+	std::tuple<const QString, const QString, const QString, const QString> lastItemData = items.back()->data();
+	if (
+		get<0>(lastItemData).length() +
+		get<1>(lastItemData).length() +
+		get<2>(lastItemData).length() +
+		get<3>(lastItemData).length() > 0
+	) {
+		SearchItemWidget *m_item_add = new SearchItemWidget();
+
+		items.append(m_item_add);
+		QObject::connect(
+			items.back(), &SearchItemWidget::valueChanged,
+			this, &SearchWidget::searchItemChanged);
+
+		m_layout->addLayout(items.back());
+	}
+
+	emit searchWidgetDirty();
+	// QTextStream(stdout) << "theoi debug searchItemChanged " << Qt::endl;
+
+}
+
+// Constructor.
+qpwgraph_patchman::SearchWidget::SearchWidget()
+{
+	m_layout = new QVBoxLayout();
+	groupbox = new QGroupBox("Expressive Connection");
+
+	qpwgraph_main *parent;
+	foreach (QWidget *w, qApp->topLevelWidgets())
+	if (QMainWindow* mainWin = qobject_cast<QMainWindow*>(w))
+		parent = qobject_cast<qpwgraph_main *> (mainWin);
+
+	ReRules re_rule = parent->reRules();
+
+	for (const auto rule : re_rule) {
+		SearchItemWidget *m_item_add = new SearchItemWidget(rule);
+
+		items.append(m_item_add);
+		QObject::connect(
+				items.back(), &SearchItemWidget::valueChanged,
+				this, &SearchWidget::searchItemChanged);
+
+		m_layout->addLayout(items.back());
+	}
+
+	SearchItemWidget *m_item_add = new SearchItemWidget();
+
+	items.append(m_item_add);
+	QObject::connect(
+		items.back(), &SearchItemWidget::valueChanged,
+		this, &SearchWidget::searchItemChanged);
+
+	m_layout->addLayout(items.back());
+
+	groupbox->setLayout(m_layout);
+	groupbox->setMinimumWidth(200);
+
+	this->setWidget(groupbox);
+	this->setWidgetResizable(true);
+	this->setFixedHeight(100);
+}
+
+// Destructor.
+qpwgraph_patchman::SearchWidget::~SearchWidget(void)
+{
+
+}
+
+ReRules qpwgraph_patchman::SearchWidget::getSearchItemWidget() {
+	ReRules retRules;
+
+	for (auto item : items) {
+		ReRule item_rule = item->data();
+		if (
+			(get<0>(item_rule).length() > 0)  &&
+			(get<1>(item_rule).length() > 0)  &&
+			(get<2>(item_rule).length() > 0)  &&
+			(get<3>(item_rule).length() > 0)
+		) {
+			retRules.push_back(item_rule);
+		}
+	}
+
+	return retRules;
+}
+
+
+void qpwgraph_patchman::qpwgraph_patchman::searchWidgetDirty(){
+	++m_dirty;
+
+	stabilize();
 }
 
 

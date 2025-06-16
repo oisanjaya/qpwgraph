@@ -77,6 +77,9 @@ protected:
 
 	class ItemDelegate;
 
+	class SearchItemWidget;
+	class SearchWidget;
+
 private:
 
 	// Instance members.
@@ -86,6 +89,8 @@ private:
 
 	MainWidget *m_main;
 
+	SearchWidget *m_search;
+
 	QPushButton *m_add_button;
 	QPushButton *m_remove_button;
 	QPushButton *m_remove_all_button;
@@ -93,6 +98,8 @@ private:
 	QPushButton *m_reset_button;
 
 	QDialogButtonBox *m_button_box;
+
+	void searchWidgetDirty();
 };
 
 
