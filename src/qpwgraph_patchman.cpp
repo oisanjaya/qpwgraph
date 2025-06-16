@@ -717,8 +717,6 @@ void qpwgraph_patchman::SearchWidget::searchItemChanged(){
 	}
 
 	emit searchWidgetDirty();
-	// QTextStream(stdout) << "theoi debug searchItemChanged " << Qt::endl;
-
 }
 
 // Constructor.

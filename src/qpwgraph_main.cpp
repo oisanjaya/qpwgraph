@@ -1326,6 +1326,31 @@ void qpwgraph_main::refresh (void)
 
 	int nchanged = 0;
 
+	for (ReRules::const_iterator i = m_re_rules.begin(); i != m_re_rules.end(); ++i) {
+		std::vector<qpwgraph_port*> ports1;
+		std::vector<qpwgraph_port*> ports2;
+		if (
+			m_pipewire->searchPortRe(get<0>(*i), get<1>(*i), qpwgraph_item::Output, &ports1) &&
+			m_pipewire->searchPortRe(get<2>(*i), get<3>(*i), qpwgraph_item::Input, &ports2)
+		) {
+			for (qpwgraph_port* port1 : ports1) {
+				for (qpwgraph_port* port2 : ports2) {
+					bool already_connected = false;
+					QList<qpwgraph_connect *> port1connects = port1->connects();
+					for (auto port1connect: port1connects) {
+						already_connected = already_connected | (port1connect->port2()->portId() == port2->portId());
+					}
+
+					if (!already_connected) {
+						m_ui.graphCanvas->emitConnectPorts(port1, port2, true);
+
+						++m_pipewire_changed;
+					}
+				}
+			}
+		}
+    }	
+
 	if (m_pipewire_changed > 0) {
 		m_pipewire_changed = 0;
 		if (m_pipewire)
