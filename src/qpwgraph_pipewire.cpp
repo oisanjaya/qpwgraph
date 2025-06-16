@@ -30,6 +30,7 @@
 #include <QMultiHash>
 #include <QTimer>
 
+#include <regex>
 
 // Default port types...
 #define DEFAULT_AUDIO_TYPE "32 bit float mono audio"
@@ -945,6 +946,42 @@ uint qpwgraph_pipewire::otherPortType (void)
 	return qpwgraph_item::itemType("PIPEWIRE_PORT_TYPE");
 }
 
+// PipeWire node:port finder based on name with regex.
+bool qpwgraph_pipewire::searchPortRe (
+	const QString& node_name_re, const QString& port_name_re,
+	qpwgraph_item::Mode port_mode, std::vector<qpwgraph_port*>*port ) {
+	qpwgraph_canvas *canvas = qpwgraph_sect::canvas();
+	if (canvas == nullptr)
+		return false;
+
+	port->clear();
+
+	foreach (Object *object, m_objects) {
+		if (object->type != Object::Node)
+			continue;
+		Node *n1 = static_cast<Node *> (object);
+		if (!n1->node_ready)
+			continue;
+		if (std::regex_match(n1->node_name.toStdString(), 
+							 std::regex(node_name_re.toStdString()))) {
+			foreach (const Port *p1, n1->node_ports) {
+				const qpwgraph_item::Mode port_mode1 = p1->port_mode;
+
+				if (std::regex_match(p1->port_name.toStdString(), 
+									 std::regex(port_name_re.toStdString()))) {
+					qpwgraph_node *node1 = nullptr;
+					qpwgraph_port *port1 = nullptr;
+					if (findNodePort(n1->id, p1->id,
+						port_mode1, &node1, &port1, true)) {
+						port->push_back(port1);
+					}
+				}
+			}
+		}
+	}
+
+	return !port->empty();
+}
 
 // PipeWire node:port finder and creator if not existing.
 bool qpwgraph_pipewire::findNodePort (

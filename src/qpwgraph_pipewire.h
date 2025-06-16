@@ -140,6 +140,11 @@ protected:
 		uint node_id, uint port_id, qpwgraph_item::Mode port_mode,
 		qpwgraph_node **node, qpwgraph_port **port, bool add_new);
 
+	// PipeWire node:port regex finder.
+	bool searchPortRe (
+		const QString& node_name_re, const QString& port_name_re,
+		qpwgraph_item::Mode port_mode, std::vector<qpwgraph_port*>*port );
+
 	// Special node finder...
 	qpwgraph_node *findNode(uint node_id, qpwgraph_item::Mode node_mode) const;
 
