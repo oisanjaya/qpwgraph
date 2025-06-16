@@ -1673,6 +1673,14 @@ void qpwgraph_patchman::accept (void)
 	if (m_patchbay)
 		m_patchbay->setItems(m_main->items());
 
+	qpwgraph_main *parent = qobject_cast<qpwgraph_main *> (parentWidget());
+
+	ReRules input_rules = m_search->getSearchItemWidget();
+
+	parent->clearReRules();
+	for (const auto& item : input_rules) {
+			parent->appendReRule(item);
+	}
 
 	QDialog::accept();
 }
