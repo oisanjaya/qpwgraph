@@ -1511,6 +1511,12 @@ qpwgraph_patchman::qpwgraph_patchman ( QWidget *parent )
 
 	m_main = new MainWidget(this);
 
+	m_search = new SearchWidget();
+	QObject::connect(
+		m_search, &SearchWidget::searchWidgetDirty,
+		this, &qpwgraph_patchman::searchWidgetDirty
+	);
+
 	QHBoxLayout *hbox = new QHBoxLayout();
 	hbox->setContentsMargins(4, 8, 4, 4);
 	hbox->setSpacing(8);
@@ -1527,8 +1533,9 @@ qpwgraph_patchman::qpwgraph_patchman ( QWidget *parent )
 	QVBoxLayout *vbox = new QVBoxLayout();
 	vbox->setContentsMargins(4, 8, 4, 4);
 	vbox->setSpacing(4);
-	vbox->addWidget(m_main);
-	vbox->addLayout(hbox);
+	vbox->addWidget(m_main, 2);
+	vbox->addWidget(m_search, 0);
+	vbox->addLayout(hbox, 0);
 
 	QDialog::setLayout(vbox);
 
